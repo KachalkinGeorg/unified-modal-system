@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Modal System (UM) — Демо</title>
+
+    <style>
+        /* ==========================================
+           БАЗОВЫЕ СТИЛИ ДЛЯ ДЕМО-СТРАНИЦЫ
+           ========================================== */
+        body { font-family: system-ui, -apple-system, -apple-system, sans-serif; margin: 0; padding: 20px; background: #f5f7fa; color: #333; line-height: 1.5; }
+        .container { max-width: 850px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1, h2 { margin-top: 0; }
+        h2 { border-bottom: 2px solid #e9ecef; padding-bottom: 8px; margin-bottom: 20px; }
+        .grid { display: grid; gap: 12px; margin-bottom: 30px; }
+        .grid-4 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+        .btn { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; color: #fff; text-align: center; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn-info { background: #0d6efd; }
+        .btn-success { background: #198754; }
+        .btn-warning { background: #ffc107; color: #000; }
+        .btn-danger { background: #dc3545; }
+        .btn-secondary { background: #6c757d; }
+        .note { background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 4px solid #0d6efd; margin: 20px 0; font-size: 13px; }
+        code { background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
+        pre { background: #212529; color: #f8f9fa; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 13px; }
+    </style>
+
+    <!-- ==========================================
+         СТИЛИ UM (В ПРОЕКТЕ ВЫНЕСТИ В um-core.css)
+         ========================================== -->
+    <style>
+        .um_info, .um_success, .um_warning, .um_error { position: relative; padding: 12px 16px 12px 48px; margin-bottom: 12px; border-radius: 6px; border-left: 4px solid transparent; font-size: 14px; line-height: 1.4; min-height: 44px; display: flex; align-items: center; }
+        .um_info:before, .um_success:before, .um_warning:before, .um_error:before { position: absolute; top: 50%; left: 12px; transform: translateY(-50%); font-size: 18px; font-weight: bold; line-height: 1; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+        .um_info { color: #084298; background: #e7f1ff; border-left-color: #0d6efd; } .um_info:before { content: "ℹ"; color: #0d6efd; }
+        .um_success { color: #0f5132; background: #e6f7ed; border-left-color: #198754; } .um_success:before { content: "✓"; color: #198754; }
+        .um_warning { color: #664d03; background: #fff3cd; border-left-color: #ffc107; } .um_warning:before { content: "⚠"; color: #ffc107; }
+        .um_error { color: #842029; background: #fde8e8; border-left-color: #dc3545; } .um_error:before { content: "✕"; color: #dc3545; }
+        @keyframes um-slideInRight { from { opacity: 0; transform: translateX(100%) translateY(-10px); } to { opacity: 1; transform: translateX(0) translateY(0); } }
+        .um-alert-top-right { top: 20px; right: 20px; left: auto; bottom: auto; }
+        .um-alert-top-left { top: 20px; left: 20px; right: auto; bottom: auto; }
+        @media (max-width: 480px) { .um_info, .um_success, .um_warning, .um_error { padding-left: 44px; margin-left: 8px; margin-right: 8px; } .um_info:before, .um_success:before, .um_warning:before, .um_error:before { left: 8px; font-size: 16px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧩 Unified Modal System (UM)</h1>
+        <div class="note">
+            <strong>Режим работы:</strong> <code>jQuery UI: <span id="jq-status">Выключен</span></code> | <code>Custom (Vanilla): Встроен</code><br>
+            💡 Система сама определяет библиотеки. Достаточно указать <code>window.UM_CONFIG.jquery_ui = true</code>, если jQuery UI подключён или <code>window.UM_CONFIG.jquery_ui = false</code> если отключен.
+        </div>
+
+        <h2>1. Уведомления <code>UM_Alert(type, message, options)</code></h2>
+        <div class="grid grid-4">
+            <button class="btn btn-info" onclick="UM_Alert('info', 'Информационное сообщение.')">Info</button>
+            <button class="btn btn-success" onclick="UM_Alert('success', 'Данные успешно сохранены!')">Success</button>
+            <button class="btn btn-warning" onclick="UM_Alert('warning', 'Внимание: проверьте данные.')">Warning</button>
+            <button class="btn btn-danger" onclick="UM_Alert('error', 'Произошла ошибка сети.')">Error</button>
+            <button class="btn btn-secondary" onclick="UM_Alert('info', 'Долгое уведомление (5 сек)', {duration: 5000})">Долгое (5с)</button>
+            <button class="btn btn-secondary" onclick="UM_Alert('success', 'Слева сверху', {position: 'top-left'})">Позиция: top-left</button>
+        </div>
+
+        <h2>2. Модальные окна <code>UM_ShowModal(opts)</code></h2>
+        <div class="grid grid-4">
+            <button class="btn btn-info" onclick="demoLoadContent()">📥 Загрузить контент</button>
+            <button class="btn btn-warning" onclick="demoActionConfirm()">✅ Подтверждение (Action)</button>
+            <button class="btn btn-success" onclick="demoCustomButtons()">🎨 Кастомные кнопки</button>
+            <button class="btn btn-secondary" onclick="demoOnLoad()">⚙️ Манипуляции в onLoad</button>
+        </div>
+
+        <h2>📖 Как подключить в реальном проекте</h2>
+        <pre><code>&lt;!-- 1. Конфиг и языки (до um-core.js) --&gt;
+&lt;script&gt;
+  window.UM_CONFIG = { jquery_ui: false };
+  var lang = { close: 'Закрыть', save: 'Сохранить', cancel: 'Отмена' };
+&lt;/script&gt;
+
+&lt;!-- 2. Основной файл системы --&gt;
+&lt;script src="/js/lib/um-core.js"&gt;&lt;/script&gt;
+
+&lt;!-- 3. Использование --&gt;
+&lt;script&gt;
+  UM_Alert('success', 'Готово!');
+  UM_ShowModal({ url: '/ajax/data.php', title: 'Данные' });
+&lt;/script&gt;</code></pre>
+    </div>
+
+    <!-- ==========================================
+         MOCK СКРИПТЫ (ДЛЯ ДЕМОНСТРАЦИИ)
+         В РЕАЛЬНОМ ПРОЕКТЕ УДАЛИТЕ ЭТОТ БЛОК И ПОДКЛЮЧИТЕ um-core.js
+         ========================================== -->
+    <script>
+        // Глобальные настройки
+        window.UM_CONFIG = { jquery_ui: false };
+        var lang = { close: 'Закрыть', save: 'Сохранить', cancel: 'Отмена' };
+        document.getElementById('jq-status').textContent = window.UM_CONFIG.jquery_ui ? 'Включён' : 'Выключен';
+	</script>
+
+	<script>
+        // UM_Alert (демо-версия)
+        function UM_Alert(type, message, options) {
+            var opts = options || {};
+            var duration = opts.duration !== undefined ? opts.duration : 3000;
+            var clickToClose = opts.clickToClose !== false;
+            var position = opts.position || 'top-right';
+            var classMap = { 'error': 'um_error', 'success': 'um_success', 'warning': 'um_warning', 'info': 'um_info' };
+            var msgClass = classMap[type] || 'um_info';
+            var notify = document.createElement('div');
+            notify.className = msgClass + ' um-alert-popup um-alert-' + position.replace('-', '-');
+            notify.innerHTML = message;
+            Object.assign(notify.style, { position: 'fixed', margin: '0', zIndex: 9999, cursor: clickToClose ? 'pointer' : 'default', animation: 'um-slideInRight 0.3s ease', maxWidth: '400px', minWidth: '280px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' });
+            document.body.appendChild(notify);
+            var close = function() { notify.style.transition = 'opacity 0.3s ease, transform 0.3s ease'; notify.style.opacity = '0'; notify.style.transform = 'translateY(-10px)'; setTimeout(function() { if (notify.parentNode) notify.parentNode.removeChild(notify); }, 300); };
+            if (clickToClose) notify.addEventListener('click', close);
+            if (duration > 0) setTimeout(close, duration);
+            return notify;
+        }
+
+        // UM_ShowModal (демо-версия)
+        function UM_ShowModal(opts) {
+            var url = opts.url || '', postData = opts.data || {}, title = opts.title || 'Информация', width = opts.width || 500, descr = opts.descr || '', isAction = !!opts.action, confirmText = opts.confirmText || 'Выполнить', buttons = opts.buttons || [], onLoad = opts.onLoad || null;
+            var esc = function(s){ if(!s) return ''; var d=document.createElement('div'); d.textContent=s; return d.innerHTML; };
+            if (isAction) { buttons = [{ text: lang.cancel || 'Отмена', class: 'secondary', click: function(c){ c(); } }, { text: confirmText, class: 'primary', click: function(c){ c(); UM_Alert('success', 'Действие выполнено!'); }}]; }
+            if (buttons.length === 0) buttons.push({ text: lang.close || 'Закрыть', class: 'primary', click: function(c){ c(); } });
+
+            var modal = document.createElement('div'); modal.className = 'gk-modal msg_modal ' + (opts.className || '');
+            modal.innerHTML = '<div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #eee;"><div style="font-weight:600;font-size:1.1em;">'+esc(title)+'</div><a role="button" class="modal-close" style="cursor:pointer;font-size:1.5em;color:#666;">&times;</a></div><div class="modal-body" style="overflow-y:auto;flex:1;padding:0 4px;max-height:70vh;"></div><div class="modal-footer" style="margin-top:20px;padding-top:16px;border-top:1px solid #eee;text-align:right;"></div>';
+            Object.assign(modal.style, {position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',zIndex:10002,borderRadius:'8px',boxShadow:'0 4px 30px rgba(0,0,0,0.25)',maxWidth:'95%',width:width+'px',background:'#fff',display:'flex',flexDirection:'column',fontFamily:'inherit'});
+            var bd = document.createElement('div'); bd.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:10001;';
+            document.body.appendChild(bd); document.body.appendChild(modal);
+            var body = modal.querySelector('.modal-body'), footer = modal.querySelector('.modal-footer');
+            if(descr) body.innerHTML = '<div style="padding:12px 8px;margin-bottom:12px;line-height:1.5;">' + esc(descr) + '</div>';
+            footer.innerHTML = buttons.map(function(b, i) { var t = b.type === 'submit' ? 'type="submit"' : 'type="button"'; var s = b.class === 'primary' ? 'background:#007bff;color:#fff;border:none;' : (b.class === 'danger' ? 'background:#dc3545;color:#fff;border:none;' : 'border:1px solid #ccc;background:#fff;'); return '<button data-idx="'+i+'" '+t+' style="margin-left:8px;padding:8px 20px;border-radius:4px;cursor:pointer;'+s+'">'+esc(b.text)+'</button>'; }).join('');
+
+            var closeFn = function(){ if(modal.parentNode) modal.remove(); if(bd.parentNode) bd.remove(); document.removeEventListener('keydown',onKey); };
+            var onKey = function(e){ if(e.key=='Escape') closeFn(); }; document.addEventListener('keydown', onKey);
+            modal.querySelector('.modal-close').onclick = function(e){ e.preventDefault(); closeFn(); };
+            footer.querySelectorAll('button[data-idx]').forEach(function(btn, i){ var h = buttons[i].click; if(h) btn.onclick = function(e){ e.preventDefault(); h.call(modal, closeFn); }; });
+            bd.onclick = closeFn;
+
+            // Имитация AJAX-загрузки
+            if (url && !isAction) {
+                body.innerHTML = '<div style="padding:40px;text-align:center;color:#666;">⏳ Загрузка...</div>';
+                setTimeout(function() {
+                    body.innerHTML = '<div style="padding:20px;">✅ Контент загружен.<br>URL: <code>' + url + '</code><br><br>В реальном проекте здесь будет ответ сервера. Все кнопки и `onLoad` работают штатно.</div>';
+                    if (onLoad) onLoad(body.innerHTML, { element: modal, close: closeFn, setContent: function(h){ body.innerHTML = h; }, setButtons: function(arr){ /* демо-заглушка */ } });
+                }, 800);
+            } else if (onLoad) {
+                onLoad(body.innerHTML, { element: modal, close: closeFn, setContent: function(h){ body.innerHTML = h; }, setButtons: function(arr){ /* демо-заглушка */ } });
+            }
+        }
+
+        // Демо-вызовы
+        function demoLoadContent() { UM_ShowModal({ url: '../examples/demo.php', title: 'Загрузка контента', width: 600 }); }
+        function demoActionConfirm() { UM_ShowModal({ title: 'Подтверждение', descr: 'Вы действительно хотите выполнить это действие?', action: true, confirmText: 'Да, выполнить' }); }
+        function demoCustomButtons() { UM_ShowModal({ title: 'Кастомные кнопки', descr: 'Каждая кнопка имеет свой класс и логику.', buttons: [{ text: 'Отмена', class: 'secondary', click: function(c){ c(); } }, { text: 'Подробнее', class: 'info', click: function(){ UM_Alert('info', 'Вы нажали "Подробнее"'); } }, { text: 'Принять', class: 'primary', click: function(c){ UM_Alert('success', 'Принято!'); c(); } }] }); }
+        function demoOnLoad() { UM_ShowModal({ title: 'Манипуляции в onLoad', width: 500, onLoad: function(html, api) { api.setContent('<div style="padding:20px;background:#f8f9fa;border-radius:4px;">Этот контент подменён через <code>api.setContent()</code> сразу после открытия.</div>'); api.setButtons([{ text: 'Понятно', class: 'primary', click: function(c){ c(); UM_Alert('info', 'Закрыто вручную'); } }]); } }); }
+    </script>
+	
+</body>
+</html>
