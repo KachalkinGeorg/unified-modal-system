@@ -318,7 +318,7 @@ echo "Получен ответ сервера";
 
 ```
 
-Где в onSuccess - `if (typeof loadOrders === 'function') loadOrders();` - кастомная функция которую пишете сами при обновлении списка (если это не обходимо и хотите, чтобы контент обновился на странице)
+Где в **onSuccess** - `if (typeof loadOrders === 'function') loadOrders();` - кастомная функция которую пишете сами при обновлении списка (если это не обходимо и хотите, чтобы контент обновился на странице)
 
 При **showResult: false**, - можно вернуть ответ JSON, тогда он должен быть таким:
 
@@ -332,7 +332,7 @@ die(json_encode([
 ], JSON_UNESCAPED_UNICODE));
 
 ```
-Где onSuccess делаем таким:
+А **onSuccess** таким:
 ```
     onSuccess: function(response) {
         try {
@@ -347,7 +347,7 @@ die(json_encode([
                     row.style.background = '#e6f7ed';
                     row.style.transition = 'background 0.3s';
                     
-                    // Замена строки
+                    // Замена строки в html
                     row.outerHTML = data.row_html;
                     
                     // Снимаем подсветку с новой строки
@@ -360,7 +360,7 @@ die(json_encode([
                 }
             }
             
-            // 2. Показываем красивый результат в модале (вручную)
+            // 2. Показываем красивый результат в модале (ручной способ)
             if (api.setContent && api.setButtons) {
                 api.setContent(
                     '<div style="padding:20px;text-align:center;">' +
@@ -385,31 +385,30 @@ die(json_encode([
     }
 });
 ```
-Таким образом мы в модали через api.setContent показали результат и обвноили строку на странице по ИД 'plugins_' + id
-Можно при обычном ответе **showResult: true** вернуть изменения в html, тогда onSuccess делаем так: 
+Таким образом мы в модали через **api.setContent** по **data.modal_content** показали результат, а по **data.row_html** обвноили строку на странице по ИД **'plugins_' + id**
+Можно при обычном ответе **showResult: true** вернуть изменения в html, тогда **onSuccess** делаем так: 
 ```
     onSuccess: function(response) {
-        if (typeof loadOrders === 'function') loadOrders();
-							
-			if (response) {
-				var row = document.getElementById('plugins_' + id);
-					if (row) row.outerHTML = response;
-				}
+			
+		if (response) {
+			var row = document.getElementById('plugins_' + id);
+			if (row) row.outerHTML = response;
+		}
 				
-			// Опционально для подсветки строки
-			setTimeout(function() {
-				var newRow = document.getElementById('plugins_' + id);
-				if (newRow) {
-					newRow.style.background = '#e6f7ed';
-					setTimeout(function() { newRow.style.background = ''; }, 2000);
-				}
-			}, 300);
+		// Опционально для подсветки строки
+		setTimeout(function() {
+			var newRow = document.getElementById('plugins_' + id);
+			if (newRow) {
+				newRow.style.background = '#e6f7ed';
+				setTimeout(function() { newRow.style.background = ''; }, 2000);
+			}
+		}, 300);
 			
     }
 
 ```
 
-В таком случая какой ответ, такая и замена в html.
+В таком случая какой ответ сервера, такая и замена строки в html по **'plugins_' + id**.
 
 **КЛАССЫ КНОПОК:**
 
