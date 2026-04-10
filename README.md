@@ -309,6 +309,108 @@ function plugins_editor(id) {
 }
 ```
 
+**ПРИМЕЧАНИЕ**
+
+При **showResult: true**, - ожидает чистый HTML, тогда ответ должен быть таким:
+
+```
+echo "Получен ответ сервера";
+
+```
+
+Где в onSuccess - `if (typeof loadOrders === 'function') loadOrders();` - кастомная функция которую пишете сами при обновлении списка (если это не обходимо и хотите, чтобы контент обновился на странице)
+
+При **showResult: false**, - можно вернуть ответ JSON, тогда он должен быть таким:
+
+```
+// После успешного сохранения:
+die(json_encode([
+    'status' => 'ok',
+    'message' => 'Заказ обновлён',
+    'row_html' => Здесь строки // <tr>...</tr>
+    'modal_content' => '<b>Статус:</b> Выполнен<br><b>Сумма:</b> 5 000 ₽'
+], JSON_UNESCAPED_UNICODE));
+
+```
+Где onSuccess делаем таким:
+```
+    onSuccess: function(response) {
+        try {
+            // Парсим ответ (может быть строка или уже объект)
+            var data = typeof response === 'string' ? JSON.parse(response) : response;
+            
+            // 1. Обновляем строку в таблице
+            if (data.row_html) {
+                var row = document.getElementById('plugins_' + id);
+                if (row) {
+                    // Плавная подсветка
+                    row.style.background = '#e6f7ed';
+                    row.style.transition = 'background 0.3s';
+                    
+                    // Замена строки
+                    row.outerHTML = data.row_html;
+                    
+                    // Снимаем подсветку с новой строки
+                    setTimeout(function() {
+                        var newRow = document.getElementById('plugins_' + id);
+                        if (newRow) {
+                            newRow.style.background = '';
+                        }
+                    }, 2000);
+                }
+            }
+            
+            // 2. Показываем красивый результат в модале (вручную)
+            if (api.setContent && api.setButtons) {
+                api.setContent(
+                    '<div style="padding:20px;text-align:center;">' +
+                        '<div style="font-weight:600;font-size:1.1em;">' + (data.message || 'Готово') + '</div>' +
+                        (data.modal_content ? '<div style="margin-top:12px;color:#555;line-height:1.5;">' + data.modal_content + '</div>' : '') +
+                    '</div>'
+                );
+                
+                api.setButtons([{
+                    text: lang.close || 'Закрыть',
+                    class: 'primary',
+                    click: function(c) { c(); }
+                }]);
+            }
+            
+        } catch(e) {
+            console.warn('Update error:', e);
+            if (typeof UM_Alert === 'function') {
+                UM_Alert('error', 'Ошибка обновления: ' + e.message);
+            }
+        }
+    }
+});
+```
+Таким образом мы в модали через api.setContent показали результат и обвноили строку на странице по ИД 'plugins_' + id
+Можно при обычном ответе **showResult: true** вернуть изменения в html, тогда onSuccess делаем так: 
+```
+    onSuccess: function(response) {
+        if (typeof loadOrders === 'function') loadOrders();
+							
+			if (response) {
+				var row = document.getElementById('plugins_' + id);
+					if (row) row.outerHTML = response;
+				}
+				
+			// Опционально для подсветки строки
+			setTimeout(function() {
+				var newRow = document.getElementById('plugins_' + id);
+				if (newRow) {
+					newRow.style.background = '#e6f7ed';
+					setTimeout(function() { newRow.style.background = ''; }, 2000);
+				}
+			}, 300);
+			
+    }
+
+```
+
+В таком случая какой ответ, такая и замена в html.
+
 **КЛАССЫ КНОПОК:**
 
 ```
